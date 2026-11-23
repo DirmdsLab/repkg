@@ -7,40 +7,75 @@ formats. The format reference is upstream commit
 
 ## Build on Ubuntu 24.04
 
-Place the ZIP in the host directory mounted as `/workspace`. Run the following
-commands inside the Ubuntu container as root.
+## Clone Repository
 
-```sh
-cd /workspace
-apt-get update
-apt-get install -y build-essential cmake pkg-config unzip liblz4-dev libpng-dev libgif-dev nlohmann-json3-dev
-unzip repkg-cpp-ubuntu-24.04.zip
-cmake -S repkg-cpp -B repkg-cpp/build -DCMAKE_BUILD_TYPE=Release
-cmake --build repkg-cpp/build --parallel
+```bash
+git clone https://github.com/DirmdsLab/repkg.git
+cd repkg
+
+# Switch to C++ branch
+git switch repkg-cpp
+git branch -a
 ```
 
-The executable is at `/workspace/repkg-cpp/build/repkg`. The port uses the
+## Build with Podman
+
+```bash
+podman run -it \
+    --name wallpaper-engine \
+    -v "$(pwd):/workspace/repkg" \
+    -w /workspace \
+    ubuntu:24.04 \
+    bash
+```
+
+### Install Dependencies
+
+Run inside the container:
+
+```bash
+cd /workspace
+
+apt-get update
+
+apt-get install -y \
+    build-essential \
+    cmake \
+    pkg-config \
+    unzip \
+    liblz4-dev \
+    libpng-dev \
+    libgif-dev \
+    nlohmann-json3-dev
+```
+
+### Build
+
+```sh
+cd /workspace/repkg
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+```
+
+The executable is at `/workspace/repkg/build/repkg`. The port uses the
 development packages above and does not require .NET or Wine. For a non-root
 Ubuntu shell, run the two `apt-get` commands with `sudo`.
 
-When installing an updated ZIP over an existing source tree, run
-`unzip -o repkg-cpp-ubuntu-24.04.zip` and rebuild with
-`cmake --build repkg-cpp/build --clean-first --parallel`. This recompiles all
-sources when the ZIP uses fixed entry timestamps.
-
 ## Usage
 
-Run these examples from `/workspace`, replacing the input paths as needed.
+```sh
+mkdir input
+```
 
 ```sh
-./repkg-cpp/build/repkg help
-./repkg-cpp/build/repkg extract -o ./output ./scene.pkg
-./repkg-cpp/build/repkg extract --allow-high-size -o ./output ./scene.pkg
-./repkg-cpp/build/repkg extract -c -n -r -o ./projects ./workshop
-./repkg-cpp/build/repkg extract --no-tex-convert -o ./raw ./scene.pkg
-./repkg-cpp/build/repkg extract -t -r -o ./images ./textures
-./repkg-cpp/build/repkg info -e -b size -p 'title,preview' ./scene.pkg
-./repkg-cpp/build/repkg info ./materials/background.tex
+./build/repkg help
+./build/repkg extract -o ./output ./input/scene.pkg
+./build/repkg extract --allow-high-size -o ./output ./input/scene.pkg
+./build/repkg extract -c -n -r -o ./projects ./workshop
+./build/repkg extract --no-tex-convert -o ./raw ./input/scene.pkg
+./build/repkg extract -t -r -o ./images ./textures
+./build/repkg info -e -b size -p 'title,preview' ./input/scene.pkg
+./build/repkg info ./materials/background.tex
 ```
 
 A single PKG normally extracts directly into the output directory.
